@@ -4,26 +4,15 @@ DOCKER_REGISTRY := mathematiguy
 IMAGE := $(DOCKER_REGISTRY)/$(IMAGE_NAME)
 HAS_DOCKER ?= $(shell which docker)
 RUN ?= $(if $(HAS_DOCKER), docker run $(DOCKER_ARGS) --rm -v $$(pwd):/work -w /work -u $(UID):$(GID) $(IMAGE))
-UID ?= $(shell id -u)
-GID ?= $(shell id -g)
+UID ?= kaimahi
+GID ?= kaimahi
 DOCKER_ARGS ?=
 
 .PHONY: docker docker-push docker-pull enter enter-root
 
-JUPYTER_PASSWORD ?= jupyter
-JUPYTER_PORT ?= 8888
-.PHONY: jupyter
-jupyter: UID=root
-jupyter: GID=root
-jupyter: DOCKER_ARGS=-u $(UID):$(GID) --rm -it -p $(JUPYTER_PORT):$(JUPYTER_PORT) -e NB_USER=$$USER -e NB_UID=$(UID) -e NB_GID=$(GID)
-jupyter:
-	$(RUN) jupyter lab \
-		--allow-root \
-		--port $(JUPYTER_PORT) \
-		--ip 0.0.0.0 \
-		--NotebookApp.password=$(shell $(RUN) \
-			python3 -c \
-			"from IPython.lib import passwd; print(passwd('$(JUPYTER_PASSWORD)'))")
+pluto: DOCKER_ARGS=-p 1234:1234 -it
+pluto:
+	$(RUN) julia -e 'import Pluto; Pluto.run(host="0.0.0.0", require_secret_for_open_links=false, require_secret_for_access=false)'
 
 docker:
 	docker build $(DOCKER_ARGS) --tag $(IMAGE):$(GIT_TAG) .
