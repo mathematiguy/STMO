@@ -1,11 +1,14 @@
 ### A Pluto.jl notebook ###
-# v0.16.0
+# v0.16.1
 
 using Markdown
 using InteractiveUtils
 
 # ╔═╡ 9c340f8b-877d-41b9-baca-2698cc2b5988
-using Plots
+begin
+	using Plots
+	using Statistics
+end
 
 # ╔═╡ 99adb0e2-1b94-11ec-1351-79707f6016af
 md"""
@@ -31,13 +34,15 @@ function bracket_minimum(f, x=0.0; s=1e-2, k=2.0)
   a, ya = x, f(x)  # lower limit of the interval
   b, yb = x, f(x + s)  #  upper limit of the interval
   if yb > ya  # default assumes f is decreasing in a, flip if not the case
-    a, b = b, a
-    ya, yb = yb, ya
+    a, b = b, a       # reverse the order of a and b
+    ya, yb = yb, ya   # reverse the order of ya and yb
     s = -s  # go to the left instead of right
   end
   while true
+	# choose c = b plus 1 step sized s
     c, yc = b + s, f(b + s)
     if yc > yb
+	  # There is a change of sign from b to c
       return a < c ? (a, c) : (c, a)
     end
     a, ya = b, yb
@@ -45,9 +50,6 @@ function bracket_minimum(f, x=0.0; s=1e-2, k=2.0)
     s *= k
   end
 end
-
-# ╔═╡ 42131c7f-2980-4bc9-be00-64e25ecd238e
-
 
 # ╔═╡ 143801cb-25ee-4a49-882a-a8ab377a25f8
 md"""
@@ -101,16 +103,23 @@ Check your results graphically.
 """
 
 # ╔═╡ ff4c2d0b-3b10-41c6-8579-c86710a54bbe
-function bisection(g, a, b; ϵ=1e-3)
+function bisection(g, a, b; ε=1e-3)
   @assert a < b "a should be smaller than b"
 
-  # a is minizer?
+  # a is minimizer?
   g(a) == 0 && return a, a
-  # b is minizer?
+  # b is minimizer?
   g(b) == 0 && return b, b
 
-  while missing
-    missing
+  while b - a > ε
+    m = (a + b) / 2
+	if g(m) == 0
+	  return m, m
+	elseif sign(g(m)) == sign(g(a))
+	  a = m
+	else
+	  b = m
+	end
   end
   return a, b
 end
@@ -119,19 +128,16 @@ end
 f(x) = log(exp(8x-3)+2exp(0.2x^2-x+1))
 
 # ╔═╡ 5eecd08d-0567-440b-97a3-121882800d79
-bracket_minimum(f, k=1.2)
+bracket_minimum(f, 1.0, s=1e-3, k=1.2)
 
 # ╔═╡ 1a2ff096-fcd5-4b5f-901b-4282627202ac
 md"> To type `f′` just type `f\prime<tab>`. Whenever you are unsure how to type a unicode character you can call it using the help, e.g. `?ϵ`."
 
 # ╔═╡ 90e525e6-ac62-4299-ac42-cda344074051
-f′(x) = missing
+f′(x) = (8exp(8x-3)+(0.4x-1)*exp(0.2x^2-x+1))/(exp(8x-3)+2exp(0.2x^2-x+1))
 
 # ╔═╡ 62d84643-d26f-475b-8431-e8f4b82f77a5
-
-
-# ╔═╡ fc9563d5-2de3-4e11-9836-d41c1c33073a
-
+bisection(f′, -1.0, 1.0, ε=1e-5)
 
 # ╔═╡ 17bd8b62-a5df-42ab-9e5c-0a6d1fd6ad6f
 md"""
@@ -301,6 +307,7 @@ end
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 Plots = "~1.22.1"
@@ -645,7 +652,7 @@ uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.36.0+0"
 
 [[LinearAlgebra]]
-deps = ["Libdl"]
+deps = ["Libdl", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[Logging]]
@@ -701,6 +708,10 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "7937eda4681660b4d6aeeecc2f7e1c81c8ee4e2f"
 uuid = "e7412a2a-1a6e-54c0-be00-318e2571c051"
 version = "1.3.5+0"
+
+[[OpenBLAS_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
+uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
 
 [[OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1069,6 +1080,10 @@ git-tree-sha1 = "5982a94fcba20f02f42ace44b9894ee2b140fe47"
 uuid = "0ac62f75-1d6f-5e53-bd7c-93b484bb37c0"
 version = "0.15.1+0"
 
+[[libblastrampoline_jll]]
+deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
+uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
+
 [[libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "daacc84a041563f965be61859a36e17c4e4fcd55"
@@ -1120,8 +1135,7 @@ version = "0.9.1+5"
 # ╟─6b30fe20-f321-4cb8-a2fc-0a2820d71bc0
 # ╟─bdf6c059-db72-4d90-b98f-2e77b7d89f37
 # ╠═662b4d13-505c-4202-b104-0db80d8b1822
-# ╠═42131c7f-2980-4bc9-be00-64e25ecd238e
-# ╟─5eecd08d-0567-440b-97a3-121882800d79
+# ╠═5eecd08d-0567-440b-97a3-121882800d79
 # ╠═a3259f42-3ab2-4cca-9179-ecf9c019aa4e
 # ╟─143801cb-25ee-4a49-882a-a8ab377a25f8
 # ╟─33b799e2-70a1-4ec2-a0c7-16fb02bce10c
@@ -1132,7 +1146,6 @@ version = "0.9.1+5"
 # ╟─1a2ff096-fcd5-4b5f-901b-4282627202ac
 # ╠═90e525e6-ac62-4299-ac42-cda344074051
 # ╠═62d84643-d26f-475b-8431-e8f4b82f77a5
-# ╠═fc9563d5-2de3-4e11-9836-d41c1c33073a
 # ╟─17bd8b62-a5df-42ab-9e5c-0a6d1fd6ad6f
 # ╠═21a3085c-609d-47de-8a96-7303187e5aa4
 # ╠═7beb8b85-4e35-4e13-896c-3fffc992ea13
