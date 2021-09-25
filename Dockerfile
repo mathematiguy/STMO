@@ -17,9 +17,9 @@ ENV LANGUAGE en_NZ:en
 
 # Create user 'kaimahi' to create a home directory
 RUN useradd kaimahi
-RUN mkdir -p /kaimahi/
-RUN chown -R kaimahi:kaimahi /kaimahi
-ENV HOME /kaimahi
+RUN mkdir -p /home/kaimahi/
+RUN chown -R kaimahi:kaimahi /home/kaimahi
+ENV HOME /home/kaimahi
 
 # Install python + other things
 RUN apt update
