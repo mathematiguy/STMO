@@ -10,9 +10,11 @@ DOCKER_ARGS ?=
 
 .PHONY: docker docker-push docker-pull enter enter-root
 
-pluto: DOCKER_ARGS=-p 1234:1234 -it
+PLUTO_PORT ?=1234
+
+pluto: DOCKER_ARGS=-p $(PLUTO_PORT):$(PLUTO_PORT) -it
 pluto:
-	$(RUN) julia -e 'import Pluto; Pluto.run(host="0.0.0.0", require_secret_for_open_links=false, require_secret_for_access=false)'
+	$(RUN) julia -e 'import Pluto; Pluto.run(host="0.0.0.0", require_secret_for_open_links=false, require_secret_for_access=false, port=$(PLUTO_PORT))'
 
 docker:
 	docker build $(DOCKER_ARGS) --tag $(IMAGE):$(GIT_TAG) .
